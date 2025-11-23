@@ -1,0 +1,6 @@
+yfinance
+pandas
+python-dotenv
+openai
+requests
+pyTelegramBotAPI
