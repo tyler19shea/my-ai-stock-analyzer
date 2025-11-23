@@ -30,7 +30,7 @@ GREETINGS=["Hello! Please provide a stock symbol for me to analyze.",
            "Howdy! How can I assist your Stock rearch today? Please provide a stock symbol to analyze.",
            "Hey there, I am ready to assist. Please provide a stock symbol for me to assist!"]
 
-
+#Getting stock data for ChatGPT to analyze
 def fetch_stock_data(ticker_symbol):
     ticker = yf.Ticker(ticker_symbol)
 
@@ -48,6 +48,7 @@ def fetch_stock_data(ticker_symbol):
         "info": info
     }
 
+#ChatGPT analyzing the stock symbol.
 def analyze_with_ai(stock_data):
     user_prompt = f"""
     Analyze the following Yahoo Finance data for ticker {stock_data['ticker']}.
@@ -71,6 +72,7 @@ def analyze_with_ai(stock_data):
 
     return response.choices[0].message.content
 
+#Bot Handling the messages sent
 @bot.message_handler(func=lambda msg:True)
 def Handle_message(message, max_retries=3):
     if "hello" in message.text.lower() or "hey" in message.text.lower():
@@ -80,7 +82,7 @@ def Handle_message(message, max_retries=3):
     print("\nFetching Yahoo Finance data...")
     data = fetch_stock_data(symbol)
     if data == "":
-        bot.send_message(message.chat.id, "Not a Stock Symbol, I need a stock symbol to analyze")
+        bot.send_message(message.chat.id, "Not a Stock Symbol, I need a stock symbol to analyze. (i.e. AAPL, NVDA)")
     else:
         for attempt in range(max_retries):
             try:
