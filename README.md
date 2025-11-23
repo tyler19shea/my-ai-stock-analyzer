@@ -69,7 +69,7 @@ The AI's behavior is guided by a system prompt stored in the `system_prompt` fil
 To start the Telegram bot, run the `finance.py` script:
 
 ```bash
-python finance.py
+python Bot.py
 ```
 
 The bot will start polling for messages. You can then interact with it via Telegram by sending it stock symbols (e.g., `AAPL`, `GOOGL`).
