@@ -8,6 +8,7 @@ import requests
 import telebot
 import time
 import random
+import sys
 
 load_dotenv()
 client=OpenAI()
@@ -100,12 +101,17 @@ def Handle_message(message, max_retries=3):
 
 def main():
     print("=== Stock Analyzer (yfinance + OpenAI) ===")
-    while True:
-        try:
-            bot.polling()
-        except requests.exceptions.ReadTimeout:
-            print("Polling timeout... restarting.")
-            time.sleep(5) # Avoid spamming the server
+    try:
+        bot.polling(non_stop=False)
+    except KeyboardInterrupt:
+        print("Stopping the bot...")
+        bot.stop_polling()
+        print("Bot stopped.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        bot.stop_polling()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
