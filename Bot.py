@@ -18,6 +18,7 @@ client=OpenAI()
 
 #Setting up Logging
 logging.basicConfig(filename="StockBot.log",format="%(asctime)s %(message)s",filemode="a", level=logging.INFO)
+logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 def log_exit():
     logging.info("Bot Stopped")
 
@@ -43,21 +44,25 @@ GREETINGS=["Hello! Please provide a stock symbol for me to analyze.",
 
 #Getting stock data for ChatGPT to analyze
 def fetch_stock_data(ticker_symbol):
-    ticker = yf.Ticker(ticker_symbol)
+    try:
+        ticker = yf.Ticker(ticker_symbol)
 
-    price_history = ticker.history(period="1y")
-    if price_history.empty:
+        price_history = ticker.history(period="1y")
+        if price_history.empty:
+            return ""
+        info = ticker.info
+
+        # Convert price history to JSON so the LLM can parse it cleanly
+        price_json = price_history.reset_index().to_json(orient="records")
+
+        return {
+            "ticker": ticker_symbol,
+            "history": json.loads(price_json),
+            "info": info
+        }
+    except Exception as e:
+        logging.error(f"Error fetching for {ticker_symbol}: {e}")
         return ""
-    info = ticker.info
-
-    # Convert price history to JSON so the LLM can parse it cleanly
-    price_json = price_history.reset_index().to_json(orient="records")
-
-    return {
-        "ticker": ticker_symbol,
-        "history": json.loads(price_json),
-        "info": info
-    }
 
 #ChatGPT analyzing the stock symbol.
 def analyze_with_ai(stock_data):
@@ -109,10 +114,11 @@ def Handle_message(message, max_retries=3):
     print("Fetching Yahoo Finance data...")
     logging.info("Fetching Yahoo Finance data...")
     data = fetch_stock_data(symbol)
-    logging.info("Data found in yahoo finance")
     if data == "":
         bot.send_message(message.chat.id, "Not a Stock Symbol, I need a stock symbol to analyze. (i.e. AAPL, NVDA)")
+        logging.info(f"No Data found for: {symbol}")
     else:
+        logging.info("Data found in yahoo finance")
         for attempt in range(max_retries):
             try:
                 bot.reply_to(message, "Analyzing with ChatGPT...")
