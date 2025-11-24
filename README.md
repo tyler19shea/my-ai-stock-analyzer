@@ -31,8 +31,8 @@ Follow these steps to set up and run the project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repository-url>
-cd <project-directory-name>
+git clone https://github.com/tyler19shea/my-ai-stock-analyzer.git
+cd my-ai-stock-analyzer
 ```
 
 ### 2. Set Up a Virtual Environment

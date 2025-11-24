@@ -10,13 +10,16 @@ import time
 import random
 import sys
 import logging
+import atexit
 
 #loading OpenAI API Key fron .env and setting up API client
 load_dotenv()
 client=OpenAI()
 
 #Setting up Logging
-logging.basicConfig(filename="StockBot.log",format="%(asctime)s %(message)s",filemode="w", level=logging.INFO)
+logging.basicConfig(filename="StockBot.log",format="%(asctime)s %(message)s",filemode="a", level=logging.INFO)
+def log_exit():
+    logging.info("Bot Stopped")
 
 #Loading System Prompt
 try:
@@ -129,6 +132,7 @@ def Handle_message(message, max_retries=3):
 def main():
     print("=== Stock Analyzer (yfinance + OpenAI) ===")
     logging.info("Stock Bot service started")
+    atexit.register(log_exit)
     try:
         bot.polling(non_stop=False)
     except Exception as e:
