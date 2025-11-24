@@ -9,18 +9,25 @@ import telebot
 import time
 import random
 import sys
+import logging
 
+#loading OpenAI API Key fron .env and setting up API client
 load_dotenv()
 client=OpenAI()
+
+#Setting up Logging
+logging.basicConfig(filename="StockBot.log",format="%(asctime)s %(message)s",filemode="w", level=logging.INFO)
 
 #Loading System Prompt
 try:
     with open("./system_prompt", "r") as file:
         SYSTEM_PROMPT=file.read()
 except FileNotFoundError:
-    print(f"Error: The file system_prompt was not found.")
+    print("Error: The file system_prompt was not found.")
+    logging.info("Error: The file system_prompt was not found.")
 except Exception as e:
     print(f"An error occurred: {e}")
+    logging.info(f"An error occurred: {e}")
 
 #Telegram Authorization and bot setup
 TELEGRAM_TOKEN=os.getenv("TELEGRAM_BOT_TOKEN")
@@ -71,45 +78,66 @@ def analyze_with_ai(stock_data):
         temperature=0.2
     )
 
+    input_tokens = response.usage.prompt_tokens
+    output_tokens = response.usage.completion_tokens
+    print(f"Input tokens: {input_tokens}")
+    logging.info(f"Input tokens: {input_tokens}")
+    print(f"Output tokens: {output_tokens}")
+    logging.info(f"Output tokens: {output_tokens}")
+
     return response.choices[0].message.content
 
 #Bot Handling the messages sent
 @bot.message_handler(func=lambda msg:True)
 def Handle_message(message, max_retries=3):
+    if str(message.chat.id) != TELEGRAM_ID:
+        bot.send_message(message.chat.id, "You are not authorized to use this bot.")
+        logging.warning(f"Unauthorized access attempt by chat ID: {message.chat.id}")
+        return
     if "hello" in message.text.lower() or "hey" in message.text.lower():
         bot.send_message(message.chat.id, GREETINGS[random.randint(0,len(GREETINGS)-1)])
+        logging.info(f"greeting from {message.chat.id}")
         return
     symbol=message.text
-    print("\nFetching Yahoo Finance data...")
+    logging.info(f"User: {symbol}")
+    print("Fetching Yahoo Finance data...")
+    logging.info("Fetching Yahoo Finance data...")
     data = fetch_stock_data(symbol)
+    logging.info("Data found in yahoo finance")
     if data == "":
         bot.send_message(message.chat.id, "Not a Stock Symbol, I need a stock symbol to analyze. (i.e. AAPL, NVDA)")
     else:
         for attempt in range(max_retries):
             try:
                 bot.reply_to(message, "Analyzing with ChatGPT...")
-                print("Analyzing with OpenAI...\n")
+                print("Analyzing with OpenAI...")
                 analysis = analyze_with_ai(data)
+                logging.info(f"Bot: {analysis}")
                 bot.reply_to(message, analysis, parse_mode="markdown")
                 return True
             except (telebot.apihelper.ReadTimeout, requests.exceptions.ReadTimeout):
                 print(f"Timeout occurred, retrying... (Attempt {attempt + 1})")
                 time.sleep(5)  # Wait for 5 seconds before retrying
         print(f"Failed to send message after {max_retries} attempts.")
+        logging.error(f"Failed to send message after {max_retries} attempts.")
         return False
         
 
 def main():
     print("=== Stock Analyzer (yfinance + OpenAI) ===")
+    logging.info("Stock Bot service started")
     try:
         bot.polling(non_stop=False)
     except KeyboardInterrupt:
         print("Stopping the bot...")
+        logging.info("User stopping the bot")
         bot.stop_polling()
         print("Bot stopped.")
+        logging.info("The Bot has stopped")
         sys.exit(0)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        logging.info(f"An unexpected error occurred: {e}")
         bot.stop_polling()
         sys.exit(1)
 
