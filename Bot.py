@@ -11,6 +11,7 @@ import random
 import sys
 import logging
 import atexit
+import signal
 
 #loading OpenAI API Key fron .env and setting up API client
 load_dotenv()
@@ -21,6 +22,8 @@ logging.basicConfig(filename="StockBot.log",format="%(asctime)s %(message)s",fil
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 def log_exit():
     logging.info("Bot Stopped")
+
+atexit.register(log_exit)
 
 #Loading System Prompt
 try:
@@ -134,11 +137,16 @@ def Handle_message(message, max_retries=3):
         logging.error(f"Failed to send message after {max_retries} attempts.")
         return False
         
+#Handles termination signals to ensure a clean exit.
+def graceful_shutdown(signum, frame):
+    logging.info(f"Caught termination signal {signum} for PID: {os.getpid()}. Shutting down gracefully.")
+    bot.stop_polling()
+    sys.exit(0)
+
 
 def main():
     print("=== Stock Analyzer (yfinance + OpenAI) ===")
-    logging.info("Stock Bot service started")
-    atexit.register(log_exit)
+    logging.info(f"Stock Bot service started with PID: {os.getpid()}")
     try:
         bot.polling(non_stop=False)
     except Exception as e:
@@ -149,4 +157,7 @@ def main():
 
 
 if __name__ == "__main__":
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+    signal.signal(signal.SIGINT, graceful_shutdown)
     main()
