@@ -105,11 +105,11 @@ def Handle_message(message, max_retries=3):
         bot.send_message(message.chat.id, "You are not authorized to use this bot.")
         logging.warning(f"Unauthorized access attempt by chat ID: {message.chat.id}")
         return
-    if "hello" in message.text.lower() or "hey" in message.text.lower():
+    elif "hello" in message.text.lower() or "hey" in message.text.lower():
         bot.send_message(message.chat.id, GREETINGS[random.randint(0,len(GREETINGS)-1)])
         logging.info(f"greeting from {message.chat.id}")
         return
-    if "thank" in message.text.lower():
+    elif "thank" in message.text.lower():
         bot.send_message(message.chat.id, "You are welcome!")
         return
     symbol=message.text
