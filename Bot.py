@@ -128,13 +128,6 @@ def main():
     logging.info("Stock Bot service started")
     try:
         bot.polling(non_stop=False)
-    except KeyboardInterrupt:
-        print("Stopping the bot...")
-        logging.info("User stopping the bot")
-        bot.stop_polling()
-        print("Bot stopped.")
-        logging.info("The Bot has stopped")
-        sys.exit(0)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         logging.info(f"An unexpected error occurred: {e}")
